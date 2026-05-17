@@ -1,0 +1,51 @@
+version: "3.9"
+
+services:
+  # ── CPU service (default) ────────────────────────────────────────────────────
+  transcription-api:
+    build: .
+    container_name: sermon-transcription
+    ports:
+      - "8000:8000"
+    environment:
+      WHISPER_MODEL:        large-v3
+      WHISPER_DEVICE:       cpu
+      WHISPER_COMPUTE_TYPE: int8
+      MAX_CONCURRENT_JOBS:  2
+      LOG_LEVEL:            info
+    volumes:
+      - ./tmp:/app/tmp        # persist temp files across restarts (optional)
+      - ./logs:/app/logs      # persist logs
+      - whisper_cache:/root/.cache/huggingface   # cache downloaded model weights
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s     # model download can take time on first run
+
+  # ── GPU service (uncomment to use) ───────────────────────────────────────────
+  # transcription-api-gpu:
+  #   build: .
+  #   container_name: sermon-transcription-gpu
+  #   ports:
+  #     - "8000:8000"
+  #   environment:
+  #     WHISPER_MODEL:        large-v3
+  #     WHISPER_DEVICE:       cuda
+  #     WHISPER_COMPUTE_TYPE: float16
+  #   volumes:
+  #     - ./tmp:/app/tmp
+  #     - ./logs:/app/logs
+  #     - whisper_cache:/root/.cache/huggingface
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             count: 1
+  #             capabilities: [gpu]
+
+volumes:
+  whisper_cache:

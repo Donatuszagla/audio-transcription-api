@@ -295,7 +295,4 @@ audio-transcription-api/
 
 
 
-git commit -m "first commit"
-git branch -M main
-git remote add origin https://github.com/Donatuszagla/audio-transcription-api.git
-git push -u origin main
+
