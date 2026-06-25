@@ -21,9 +21,10 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from api.routes import health_router, transcription_router
+from api.routes import health_router, document_router
 from config import get_settings
 from services.job_store import job_store
+from services.doc_job_store import doc_job_store
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 
@@ -92,27 +93,28 @@ async def lifespan(app: FastAPI):
 
     logger.info("=" * 60)
     logger.info("Sermon Transcription API starting up")
-    logger.info("Whisper model : %s", cfg.whisper_model)
-    logger.info("Device        : %s", cfg.whisper_device)
+    if cfg.enable_transcription:
+        logger.info("Whisper model : %s", cfg.whisper_model)
+        logger.info("Device        : %s", cfg.whisper_device)
     logger.info("Upload dir    : %s", Path(cfg.upload_dir).resolve())
     logger.info("Max upload    : %d MB", cfg.max_upload_mb)
     logger.info("=" * 60)
 
-    # Start job TTL eviction loop
-    eviction_task = asyncio.create_task(
-        job_store.start_eviction_loop(interval_seconds=300)
+    # Start job TTL eviction loops
+    eviction_task = None
+    if cfg.enable_transcription:
+        eviction_task = asyncio.create_task(
+            job_store.start_eviction_loop(interval_seconds=300)
+        )
+    doc_eviction_task = asyncio.create_task(
+        doc_job_store.start_eviction_loop(interval_seconds=300)
     )
-
-    # Optional: pre-warm model at startup (removes cold-start on first request)
-    # Uncomment for production — adds ~30-60 s to startup time:
-    # logger.info("Pre-warming Whisper model…")
-    # from services.transcription_service import get_model
-    # await get_model()
-    # logger.info("Model ready.")
 
     yield
 
-    eviction_task.cancel()
+    if eviction_task:
+        eviction_task.cancel()
+    doc_eviction_task.cancel()
     logger.info("API shut down.")
 
 
@@ -182,7 +184,10 @@ def create_app() -> FastAPI:
 
     # ── Routers ───────────────────────────────────────────────────────────────
     app.include_router(health_router)
-    app.include_router(transcription_router)
+    if cfg.enable_transcription:
+        from api.routes.transcription import router as transcription_router
+        app.include_router(transcription_router)
+    app.include_router(document_router)
 
     return app
 

@@ -1,17 +1,27 @@
 # ── Build stage ───────────────────────────────────────────────────────────────
 FROM python:3.11-slim AS base
 
+ARG BUILD_MODE=full
+ENV BUILD_MODE=${BUILD_MODE}
+
 # System dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ffmpeg \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && \
+    if [ "$BUILD_MODE" = "cleaner" ]; then \
+        apt-get install -y --no-install-recommends curl; \
+    else \
+        apt-get install -y --no-install-recommends ffmpeg curl; \
+    fi && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 # Install Python deps first (layer caching)
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements.txt requirements-cleaner.txt ./
+RUN if [ "$BUILD_MODE" = "cleaner" ]; then \
+        pip install --no-cache-dir -r requirements-cleaner.txt; \
+    else \
+        pip install --no-cache-dir -r requirements.txt; \
+    fi
 
 # Copy source
 COPY . .
@@ -22,6 +32,7 @@ RUN mkdir -p tmp logs
 # ── Runtime ───────────────────────────────────────────────────────────────────
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
+    ENABLE_TRANSCRIPTION=true \
     WHISPER_MODEL=large-v3 \
     WHISPER_DEVICE=cpu \
     WHISPER_COMPUTE_TYPE=int8 \

@@ -5,19 +5,6 @@ python-multipart==0.0.12          # required for Form / File uploads
 pydantic==2.10.2
 pydantic-settings==2.6.1
 
-# ── Whisper (CTranslate2 backend — 2-4× faster than openai-whisper) ──────────
-faster-whisper==1.1.0
-ctranslate2>=4.4.0                # installed as faster-whisper dependency
-
-# ── GPU support (optional — comment out if CPU-only) ─────────────────────────
-# torch>=2.2.0                    # uncomment for CUDA GPU support
-# torchaudio>=2.2.0
-
-# ── Audio tools ───────────────────────────────────────────────────────────────
-# ffmpeg is installed via system package manager (see README), not pip.
-# The following are optional Python bindings (not required by this project):
-# ffmpeg-python==0.2.0
-
 # ── Utilities ────────────────────────────────────────────────────────────────
 python-dotenv==1.0.1
 
@@ -25,4 +12,3 @@ python-dotenv==1.0.1
 mammoth==1.8.0            # .docx text extraction (pure Python, no LibreOffice needed)
 sharepoint-to-text==1.1.11 # .doc text extraction (pure Python, no external binaries needed)
 httpx[http2]>=0.27.0      # async HTTP client for LLM API calls (Ollama / OpenAI-compat)
-

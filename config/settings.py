@@ -21,6 +21,9 @@ class Settings(BaseSettings):
         case_sensitive=False,
     )
 
+    # Enable transcription features (Whisper model loading)
+    enable_transcription: bool = True
+
     # ── Whisper ──────────────────────────────────────────────────────────────
     whisper_model: Literal[
         "tiny", "base", "small", "medium", "large", "large-v2", "large-v3"
@@ -42,6 +45,19 @@ class Settings(BaseSettings):
     upload_dir: str = "tmp"
     max_upload_mb: int = 2048          # 2 GB ceiling — enough for 4+ hr audio
     allowed_extensions: set[str] = {".mp3", ".wav", ".m4a", ".ogg", ".flac", ".aac"}
+
+    # ── Document cleaning — file handling ────────────────────────────────────
+    allowed_doc_extensions: set[str] = {".docx", ".doc"}  # mammoth for .docx, sharepoint-to-text for .doc
+    max_doc_upload_mb: int = 50                       # 50 MB is generous for any Word doc
+
+    # ── LLM (Ollama / OpenAI-compatible) ────────────────────────────────────
+    llm_api_url: str = "http://localhost:11434/v1"   # Ollama default; override for cloud
+    llm_model: str = "llama3"                        # change to your installed model
+    llm_api_key: str = "ollama"                      # Ollama ignores this; required for cloud
+    llm_request_timeout: int = 300                   # 5 min per chunk (large models are slow)
+    llm_max_retries: int = 3                         # exponential backoff on 5xx / timeout
+    llm_chunk_max_words: int = 1000                  # target chunk size for splitting
+    llm_parallel_chunks: bool = False                # sequential is safer on single-GPU
 
     # ── Text cleaning ────────────────────────────────────────────────────────
     clean_output_default: bool = True

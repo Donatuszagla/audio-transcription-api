@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: sermon-document-cleaner
+    env: docker
+    plan: free # Run on the Free Tier (512MB RAM) since Whisper is disabled
+    envVars:
+      - key: ENABLE_TRANSCRIPTION
+        value: "false" # Disables Whisper and transcription routes
+      - key: LLM_API_URL
+        value: "https://api.openai.com/v1" # Target OpenAI by default, change to Groq/Together/etc. if desired
+      - key: LLM_MODEL
+        value: "gpt-4o-mini" # Lightweight & fast model for document cleaning
+      - key: LLM_API_KEY
+        sync: true # Prompts you to enter your API key securely on the Render dashboard
+      - key: PORT
+        value: "8000"
+      - key: UPLOAD_DIR
+        value: "tmp"
+      - key: LOG_LEVEL
+        value: "info"
+    # Tells Render to build the container in 'cleaner' mode
+    # This skips downloading PyTorch/faster-whisper and installing ffmpeg
+    dockerBuildArgs:
+      BUILD_MODE: cleaner
